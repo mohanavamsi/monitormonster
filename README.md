@@ -35,13 +35,34 @@ Built specifically for MacBooks (Apple Silicon M1/M2/M3/M4 & Intel) using native
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Installation
 
-### Build & Run
+### Option 1: One-Line Terminal Install (Recommended)
+Anyone on a Mac can open Terminal and run this single command:
 ```bash
-./scripts/run.sh
+curl -fsSL https://raw.githubusercontent.com/mohanavamsi/monitormonster/main/install.sh | bash
+```
+This automatically installs `MonitorMonster.app` to `/Applications` and launches it right into your menu bar!
+
+---
+
+### Option 2: Homebrew Cask
+If you use Homebrew:
+```bash
+brew install --cask mohanavamsi/monitormonster/monitormonster
 ```
 
-MonitorMonster runs with:
-1. **A Floating Desktop Window** centered on your screen with a macOS Dock icon.
-2. **A Menu Bar Extra** at the top right of your screen.
+---
+
+### Option 3: Direct Download (.dmg)
+1. Download **[MonitorMonster-1.0.0.dmg](https://github.com/mohanavamsi/monitormonster/releases/latest)**.
+2. Open the `.dmg` and drag **MonitorMonster** into your **Applications** folder.
+
+---
+
+### Option 4: Build from Source
+```bash
+git clone https://github.com/mohanavamsi/monitormonster.git
+cd monitormonster
+./scripts/run.sh
+```
