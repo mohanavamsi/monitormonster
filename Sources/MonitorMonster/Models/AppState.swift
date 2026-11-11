@@ -10,6 +10,7 @@ public final class AppState: ObservableObject {
     @Published public var wifiDetails: WiFiDetails = WiFiDetails()
     @Published public var ipDetails: IPDetails = IPDetails()
     @Published public var batteryDetails: BatteryDetails = BatteryDetails()
+    @Published public var systemStats: SystemStats = SystemStats()
     @Published public var latencyMetrics: LatencyMetrics = LatencyMetrics()
     @Published public var throughput: ThroughputMetric = ThroughputMetric()
     @Published public var isConnected: Bool = false
@@ -33,6 +34,7 @@ public final class AppState: ObservableObject {
     private var metricsTimer: Timer?
     private var latencyTimer: Timer?
     private var batteryTimer: Timer?
+    private var systemTimer: Timer?
     private var blinkTimer: Timer?
 
     private init() {
@@ -83,6 +85,9 @@ public final class AppState: ObservableObject {
         // Fetch Battery
         self.batteryDetails = BatteryService.shared.fetchBatteryDetails()
 
+        // Fetch CPU & Memory System Stats
+        self.systemStats = SystemStatsService.shared.sample()
+
         // Update Mood
         updateMood()
 
@@ -104,6 +109,10 @@ public final class AppState: ObservableObject {
             currentMood = .offline
             return
         }
+        if systemStats.cpuTotalPercent >= 85.0 || systemStats.memoryPressure == "Critical" {
+            currentMood = .fever
+            return
+        }
         if let temp = batteryDetails.temperatureCelsius, temp >= 38.8 {
             currentMood = .fever
             return
@@ -120,7 +129,7 @@ public final class AppState: ObservableObject {
             currentMood = .happy
             return
         }
-        if let watts = batteryDetails.powerDrawWatts, watts < 5.5 && !batteryDetails.isCharging {
+        if let watts = batteryDetails.powerDrawWatts, watts < 5.5 && !batteryDetails.isCharging && systemStats.cpuTotalPercent < 15.0 {
             currentMood = .sleepy
             return
         }
@@ -173,6 +182,15 @@ public final class AppState: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
                 self.batteryDetails = BatteryService.shared.fetchBatteryDetails()
+                self.updateMood()
+            }
+        }
+
+        // 4. CPU & RAM updates every 2s
+        systemTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                self.systemStats = SystemStatsService.shared.sample()
                 self.updateMood()
             }
         }

@@ -34,6 +34,14 @@ Built specifically for MacBooks (Apple Silicon M1/M2/M3/M4 & Intel) using native
   - **Voltage (V)** & **Current (mA)**.
   - **Power Source & Low Power Mode** indicators.
 
+### ⚡ 3. CPU & Memory Diagnostics (Mach Kernel Powered)
+- **Live CPU Ring Gauge**: Instant processor load % with color-coded states (Cool 🧊 / Normal ⚡ / Heavy 🔥).
+- **Core Diagnostics**: User vs. System kernel load breakdown with active Apple Silicon / Intel core count.
+- **Memory (RAM) Ring Gauge**: Live used GB / total physical memory (e.g. `5.8 / 8.0 GB`).
+- **macOS Memory Pressure**: Tracks Apple's true memory pressure status (*Normal / Moderate / Critical*).
+- **RAM Composition**: Transparent breakdown into App Memory, Wired kernel pages, and Compressed cache.
+- **Reactive Monster Personality**: Monster expressions react dynamically when CPU exceeds 80% or memory pressure spikes!
+
 ---
 
 ## 🚀 Installation

@@ -19,18 +19,21 @@ public struct DashboardView: View {
             // MARK: - Main Content Area
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 14) {
-                    // 2-Tab Segmented Switcher
+                    // 3-Tab Segmented Switcher
                     Picker("", selection: $state.selectedTab) {
-                        Text("📶 Wi-Fi & Network").tag(0)
-                        Text("🔋 Battery & Power").tag(1)
+                        Text("📶 Wi-Fi").tag(0)
+                        Text("🔋 Battery").tag(1)
+                        Text("⚡ CPU & RAM").tag(2)
                     }
                     .pickerStyle(.segmented)
                     .padding(.top, 4)
 
                     if state.selectedTab == 0 {
                         overviewTabContent
-                    } else {
+                    } else if state.selectedTab == 1 {
                         BatteryView(battery: state.batteryDetails)
+                    } else {
+                        SystemStatsView(stats: state.systemStats)
                     }
                 }
                 .padding(.horizontal, 16)
