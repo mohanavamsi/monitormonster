@@ -26,6 +26,10 @@ mkdir -p "$APP_DIR/Contents/Resources"
 cp "$BUILD_DIR/MonitorMonster" "$APP_DIR/Contents/MacOS/MonitorMonster"
 chmod +x "$APP_DIR/Contents/MacOS/MonitorMonster"
 
+if [ -f "$PROJECT_DIR/Resources/AppIcon.icns" ]; then
+    cp "$PROJECT_DIR/Resources/AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
+fi
+
 cat << 'EOF' > "$APP_DIR/Contents/Info.plist"
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -39,6 +43,10 @@ cat << 'EOF' > "$APP_DIR/Contents/Info.plist"
     <string>MonitorMonster</string>
     <key>CFBundleDisplayName</key>
     <string>MonitorMonster</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

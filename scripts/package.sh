@@ -24,6 +24,13 @@ mkdir -p "$STAGING_DIR"
 # Copy App to staging
 cp -R "$APP_DIR" "$STAGING_DIR/MonitorMonster.app"
 
+# Add custom volume icon if available
+if [ -f "$PROJECT_DIR/Resources/AppIcon.icns" ]; then
+    cp "$PROJECT_DIR/Resources/AppIcon.icns" "$STAGING_DIR/.VolumeIcon.icns"
+    SetFile -c icnC "$STAGING_DIR/.VolumeIcon.icns" 2>/dev/null || true
+    SetFile -a C "$STAGING_DIR" 2>/dev/null || true
+fi
+
 # Create symlink to /Applications for standard drag-and-drop installer
 ln -s /Applications "$STAGING_DIR/Applications"
 
