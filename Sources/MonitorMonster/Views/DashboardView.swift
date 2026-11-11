@@ -52,15 +52,33 @@ public struct DashboardView: View {
     // MARK: - Header Bar
     private var headerBar: some View {
         HStack(spacing: 12) {
-            GlowingMonsterBallView(size: 34)
+            GlowingMonsterBallView(
+                mood: state.currentMood,
+                isBlinking: state.isBlinking,
+                isPoked: state.isMonsterPoked,
+                size: 36
+            )
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text("MonitorMonster")
                         .font(.system(size: 15, weight: .bold))
                     Text("v1.0")
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(.secondary)
+
+                    // Live Mood Status Pill
+                    HStack(spacing: 3) {
+                        Text(state.currentMood.emoji)
+                            .font(.system(size: 10))
+                        Text(state.currentMood.title)
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(state.currentMood.moodColor)
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(state.currentMood.moodColor.opacity(0.14))
+                    .clipShape(Capsule())
                 }
 
                 HStack(spacing: 5) {
@@ -259,71 +277,124 @@ public struct VisualEffectView: NSViewRepresentable {
     public func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
 
-// MARK: - Glowing Monster Ball View (Icon with two cute eyes)
+// MARK: - Glowing Monster Ball View (Living, Reactive, Animated)
 public struct GlowingMonsterBallView: View {
-    public var size: CGFloat = 34
+    public var mood: MonsterMood
+    public var isBlinking: Bool
+    public var isPoked: Bool
+    public var size: CGFloat
 
-    public init(size: CGFloat = 34) {
+    public init(mood: MonsterMood = .chill, isBlinking: Bool = false, isPoked: Bool = false, size: CGFloat = 34) {
+        self.mood = mood
+        self.isBlinking = isBlinking
+        self.isPoked = isPoked
         self.size = size
     }
 
     public var body: some View {
-        ZStack {
-            // Ambient outer glow
-            Circle()
-                .fill(RadialGradient(
-                    colors: [Color.cyan.opacity(0.85), Color.purple.opacity(0.35), Color.clear],
-                    center: .center,
-                    startRadius: 2,
-                    endRadius: size * 0.72
-                ))
-                .frame(width: size * 1.35, height: size * 1.35)
+        Button(action: {
+            AppState.shared.pokeMonster()
+        }) {
+            ZStack {
+                // 1. Ambient Living Glow
+                Circle()
+                    .fill(RadialGradient(
+                        colors: [
+                            mood.gradientColors.first?.opacity(0.8) ?? Color.cyan.opacity(0.8),
+                            mood.gradientColors.last?.opacity(0.25) ?? Color.purple.opacity(0.25),
+                            Color.clear
+                        ],
+                        center: .center,
+                        startRadius: 2,
+                        endRadius: size * 0.75
+                    ))
+                    .frame(width: size * 1.4, height: size * 1.4)
 
-            // Monster Ball body with electric gradient
-            Circle()
-                .fill(LinearGradient(
-                    colors: [
-                        Color(red: 0.1, green: 0.85, blue: 0.95), // Electric Cyan
-                        Color(red: 0.6, green: 0.25, blue: 0.95)  // Neon Purple
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ))
-                .frame(width: size, height: size)
-                .overlay(
-                    Circle()
-                        .stroke(Color.white.opacity(0.4), lineWidth: 1.2)
-                )
-                .shadow(color: Color.cyan.opacity(0.8), radius: 6, x: 0, y: 0)
+                // 2. Glowing Orb Body
+                Circle()
+                    .fill(LinearGradient(
+                        colors: mood.gradientColors,
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ))
+                    .frame(width: size, height: size)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.4), lineWidth: 1.2)
+                    )
+                    .shadow(color: mood.moodColor.opacity(0.7), radius: 6, x: 0, y: 0)
 
-            // Two cute eyes
-            HStack(spacing: size * 0.14) {
-                eye(size: size)
-                eye(size: size)
+                // 3. Cheeks for Happy mood
+                if mood == .happy {
+                    HStack(spacing: size * 0.44) {
+                        Circle()
+                            .fill(Color.pink.opacity(0.6))
+                            .frame(width: size * 0.12, height: size * 0.08)
+                        Circle()
+                            .fill(Color.pink.opacity(0.6))
+                            .frame(width: size * 0.12, height: size * 0.08)
+                    }
+                    .offset(y: size * 0.16)
+                }
+
+                // 4. Two Expressive Eyes
+                HStack(spacing: size * 0.14) {
+                    eyeView(isLeft: true)
+                    eyeView(isLeft: false)
+                }
+                .offset(y: -size * 0.03)
             }
-            .offset(y: -size * 0.03)
+            .scaleEffect(isPoked ? 1.2 : 1.0)
         }
+        .buttonStyle(.plain)
+        .help("MonitorMonster: \(mood.title) (Click to poke!)")
     }
 
-    private func eye(size: CGFloat) -> some View {
-        ZStack {
-            // White eyeball
+    @ViewBuilder
+    private func eyeView(isLeft: Bool) -> some View {
+        let isClosed = isBlinking || (isPoked && isLeft) || mood == .sleepy
+
+        if isClosed {
+            // Blinking, Winking, or Sleepy closed eye
             Capsule()
                 .fill(Color.white)
-                .frame(width: size * 0.18, height: size * 0.28)
-                .shadow(color: .black.opacity(0.25), radius: 1, x: 0, y: 1)
-
-            // Dark pupil
+                .frame(width: size * 0.20, height: 2.4)
+                .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
+        } else if mood == .fever || mood == .laggy {
+            // Squinty / Strained angled eyes (> <)
+            Image(systemName: isLeft ? "chevron.right" : "chevron.left")
+                .font(.system(size: size * 0.22, weight: .black))
+                .foregroundColor(.white)
+        } else if mood == .offline {
+            // Surprised wide hollow eyes (O O)
             Circle()
-                .fill(Color(red: 0.08, green: 0.05, blue: 0.2))
-                .frame(width: size * 0.11, height: size * 0.11)
-                .offset(y: -size * 0.03)
+                .stroke(Color.white, lineWidth: 2.0)
+                .frame(width: size * 0.22, height: size * 0.22)
+                .overlay(
+                    Circle()
+                        .fill(Color(red: 0.1, green: 0.1, blue: 0.25))
+                        .frame(width: size * 0.08, height: size * 0.08)
+                )
+        } else {
+            // Cute living eye with pupil & catchlight
+            ZStack {
+                Capsule()
+                    .fill(Color.white)
+                    .frame(width: size * 0.18, height: size * 0.28)
+                    .shadow(color: .black.opacity(0.25), radius: 1, x: 0, y: 1)
 
-            // Tiny catchlight glint
-            Circle()
-                .fill(Color.white)
-                .frame(width: size * 0.045, height: size * 0.045)
-                .offset(x: -size * 0.025, y: -size * 0.05)
+                // Dark pupil
+                Circle()
+                    .fill(Color(red: 0.08, green: 0.05, blue: 0.2))
+                    .frame(width: size * 0.11, height: size * 0.11)
+                    .offset(y: -size * 0.03)
+
+                // Cute catchlight glint
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: size * 0.045, height: size * 0.045)
+                    .offset(x: -size * 0.025, y: -size * 0.05)
+            }
         }
     }
 }

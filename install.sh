@@ -38,3 +38,4 @@ open "$INSTALL_DIR/$APP_NAME.app"
 echo ""
 echo "🎉 $APP_NAME installed successfully to $INSTALL_DIR/$APP_NAME.app!"
 echo "   Look for the glowing monster ball in your top-right Menu Bar!"
+

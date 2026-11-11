@@ -1,10 +1,12 @@
 import AppKit
 import SwiftUI
+import Combine
 
 @MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
+    private var cancellables = Set<AnyCancellable>()
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         // Pure Menu Bar Accessory app (no window in the middle of desktop)
@@ -13,7 +15,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         // Setup Status Item in Menu Bar with Glowing Monster Ball icon
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            button.image = createMonsterBallIcon()
+            button.image = createMonsterBallIcon(mood: AppState.shared.currentMood, isBlinking: false)
             button.action = #selector(togglePopover(_:))
             button.target = self
         }
@@ -31,6 +33,19 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             self.popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             self.popover.contentViewController?.view.window?.makeKey()
         }
+
+        // Observe Monster's Mood & Blink expressions
+        setupMonsterObserver()
+    }
+
+    private func setupMonsterObserver() {
+        Publishers.CombineLatest(AppState.shared.$currentMood, AppState.shared.$isBlinking)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] mood, isBlinking in
+                guard let self = self, let button = self.statusItem?.button else { return }
+                button.image = self.createMonsterBallIcon(mood: mood, isBlinking: isBlinking)
+            }
+            .store(in: &cancellables)
     }
 
     @objc private func togglePopover(_ sender: AnyObject?) {
@@ -45,7 +60,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func createMonsterBallIcon() -> NSImage {
+    private func createMonsterBallIcon(mood: MonsterMood, isBlinking: Bool) -> NSImage {
         let size = NSSize(width: 18, height: 18)
         let image = NSImage(size: size, flipped: false) { rect in
             guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
@@ -53,7 +68,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             // 1. Soft Outer Glow Aura
             let glowRect = CGRect(x: 0.8, y: 0.8, width: 16.4, height: 16.4)
             ctx.addPath(CGPath(ellipseIn: glowRect, transform: nil))
-            ctx.setFillColor(NSColor.labelColor.withAlphaComponent(0.25).cgColor)
+            ctx.setFillColor(NSColor.labelColor.withAlphaComponent(0.22).cgColor)
             ctx.fillPath()
 
             // 2. Monster Ball Body
@@ -62,13 +77,47 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             ctx.setFillColor(NSColor.labelColor.cgColor)
             ctx.fillPath()
 
-            // 3. Two Expressive Cute Eyes
+            // 3. Eyes (Cutout via .clear blend mode)
             ctx.setBlendMode(.clear)
-            let leftEye = CGRect(x: 5.2, y: 7.2, width: 2.7, height: 4.2)
-            let rightEye = CGRect(x: 10.1, y: 7.2, width: 2.7, height: 4.2)
-            ctx.addPath(CGPath(ellipseIn: leftEye, transform: nil))
-            ctx.addPath(CGPath(ellipseIn: rightEye, transform: nil))
-            ctx.fillPath()
+
+            if isBlinking || mood == .sleepy {
+                // Natural Blink or Sleepy slits (- -)
+                let leftSlit = CGRect(x: 4.8, y: 8.5, width: 3.5, height: 1.2)
+                let rightSlit = CGRect(x: 9.7, y: 8.5, width: 3.5, height: 1.2)
+                ctx.fill([leftSlit, rightSlit])
+            } else if mood == .fever || mood == .laggy {
+                // Squinty / Strained angled eyes (> <)
+                ctx.setLineWidth(1.3)
+                ctx.setLineCap(.round)
+
+                // Left '>'
+                ctx.beginPath()
+                ctx.move(to: CGPoint(x: 5.0, y: 10.5))
+                ctx.addLine(to: CGPoint(x: 7.5, y: 8.5))
+                ctx.addLine(to: CGPoint(x: 5.0, y: 6.5))
+                ctx.strokePath()
+
+                // Right '<'
+                ctx.beginPath()
+                ctx.move(to: CGPoint(x: 13.0, y: 10.5))
+                ctx.addLine(to: CGPoint(x: 10.5, y: 8.5))
+                ctx.addLine(to: CGPoint(x: 13.0, y: 6.5))
+                ctx.strokePath()
+            } else if mood == .offline {
+                // Wide surprised hollow circles (O O)
+                let leftEye = CGRect(x: 4.8, y: 7.0, width: 3.4, height: 4.5)
+                let rightEye = CGRect(x: 9.8, y: 7.0, width: 3.4, height: 4.5)
+                ctx.addPath(CGPath(ellipseIn: leftEye, transform: nil))
+                ctx.addPath(CGPath(ellipseIn: rightEye, transform: nil))
+                ctx.fillPath()
+            } else {
+                // Normal / Happy cute oval eyes
+                let leftEye = CGRect(x: 5.2, y: 7.2, width: 2.7, height: 4.2)
+                let rightEye = CGRect(x: 10.1, y: 7.2, width: 2.7, height: 4.2)
+                ctx.addPath(CGPath(ellipseIn: leftEye, transform: nil))
+                ctx.addPath(CGPath(ellipseIn: rightEye, transform: nil))
+                ctx.fillPath()
+            }
 
             return true
         }

@@ -16,6 +16,11 @@ public final class AppState: ObservableObject {
     @Published public var connectionTypeDescription: String = "Detecting Network..."
     @Published public var lastRefreshed: Date = Date()
 
+    // The Monster's Personality & Mood
+    @Published public var currentMood: MonsterMood = .chill
+    @Published public var isBlinking: Bool = false
+    @Published public var isMonsterPoked: Bool = false
+
     // History for throughput mini-sparkline
     @Published public var downloadHistory: [Double] = Array(repeating: 0.0, count: 20)
     @Published public var uploadHistory: [Double] = Array(repeating: 0.0, count: 20)
@@ -28,6 +33,7 @@ public final class AppState: ObservableObject {
     private var metricsTimer: Timer?
     private var latencyTimer: Timer?
     private var batteryTimer: Timer?
+    private var blinkTimer: Timer?
 
     private init() {
         setupNetworkObserver()
@@ -77,15 +83,59 @@ public final class AppState: ObservableObject {
         // Fetch Battery
         self.batteryDetails = BatteryService.shared.fetchBatteryDetails()
 
+        // Update Mood
+        updateMood()
+
         // Trigger latency test
         Task {
             await self.refreshLatency()
+            self.updateMood()
         }
     }
 
     public func refreshLatency() async {
         let metrics = await LatencyService.shared.checkNetworkLatency(gatewayIP: ipDetails.gatewayIP)
         self.latencyMetrics = metrics
+        self.updateMood()
+    }
+
+    public func updateMood() {
+        if !isConnected {
+            currentMood = .offline
+            return
+        }
+        if let temp = batteryDetails.temperatureCelsius, temp >= 38.8 {
+            currentMood = .fever
+            return
+        }
+        if let rLat = latencyMetrics.routerLatencyMs, rLat >= 85.0 {
+            currentMood = .laggy
+            return
+        }
+        if let iLat = latencyMetrics.internetLatencyMs, iLat >= 140.0 {
+            currentMood = .laggy
+            return
+        }
+        if throughput.bytesInPerSec > 1.2 * 1024 * 1024 || batteryDetails.isCharging {
+            currentMood = .happy
+            return
+        }
+        if let watts = batteryDetails.powerDrawWatts, watts < 5.5 && !batteryDetails.isCharging {
+            currentMood = .sleepy
+            return
+        }
+        currentMood = .chill
+    }
+
+    public func pokeMonster() {
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.5)) {
+            isMonsterPoked = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                self.isMonsterPoked = false
+            }
+        }
     }
 
     private func startTimers() {
@@ -101,6 +151,8 @@ public final class AppState: ObservableObject {
 
                 self.uploadHistory.removeFirst()
                 self.uploadHistory.append(metric.bytesOutPerSec)
+
+                self.updateMood()
             }
         }
 
@@ -111,6 +163,7 @@ public final class AppState: ObservableObject {
                 if let (wifi, ip) = WiFiService.shared.fetchCurrentWiFiDetails() {
                     self.wifiDetails = wifi
                     self.ipDetails = ip
+                    self.updateMood()
                 }
             }
         }
@@ -120,6 +173,7 @@ public final class AppState: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
                 self.batteryDetails = BatteryService.shared.fetchBatteryDetails()
+                self.updateMood()
             }
         }
 
@@ -128,6 +182,16 @@ public final class AppState: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self = self, self.isConnected else { return }
                 await self.refreshLatency()
+            }
+        }
+
+        // 5. Natural Eye Blink Timer (every 3.8s, quick 150ms blink)
+        blinkTimer = Timer.scheduledTimer(withTimeInterval: 3.8, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                self.isBlinking = true
+                try? await Task.sleep(nanoseconds: 150_000_000)
+                self.isBlinking = false
             }
         }
     }
