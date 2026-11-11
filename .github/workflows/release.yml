@@ -9,19 +9,19 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-macos:
     runs-on: macos-14
-
+    continue-on-error: true
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Build and Package
+      - name: Build and Package macOS
         run: |
           chmod +x scripts/build.sh scripts/package.sh
           ./scripts/package.sh
 
-      - name: Create GitHub Release
+      - name: Upload macOS Release Assets
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -33,3 +33,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build and Package Windows Standalone
+        shell: pwsh
+        run: |
+          ./windows/scripts/build.ps1
+          Compress-Archive -Path ./dist/windows/* -DestinationPath ./dist/windows/MonitorMonster-win-x64.zip
+
+      - name: Upload Windows Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/windows/MonitorMonster.exe
+            dist/windows/MonitorMonster-win-x64.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
