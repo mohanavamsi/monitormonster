@@ -36,7 +36,11 @@ ln -s /Applications "$STAGING_DIR/Applications"
 
 echo "==> 3. Creating $DMG_NAME (Disk Image Installer)..."
 rm -f "$DIST_DIR/$DMG_NAME"
-diskutil image create from --format UDZO --volumeName "MonitorMonster" "$STAGING_DIR" "$DIST_DIR/$DMG_NAME"
+if command -v hdiutil &>/dev/null; then
+    hdiutil create -volname "MonitorMonster" -srcfolder "$STAGING_DIR" -ov -format UDZO "$DIST_DIR/$DMG_NAME"
+else
+    diskutil image create from --format UDZO --volumeName "MonitorMonster" "$STAGING_DIR" "$DIST_DIR/$DMG_NAME"
+fi
 
 rm -rf "$STAGING_DIR"
 
