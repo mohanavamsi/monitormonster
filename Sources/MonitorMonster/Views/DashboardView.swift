@@ -70,10 +70,6 @@ public struct DashboardView: View {
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(.secondary)
 
-                    Text("by itvizag")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(.secondary.opacity(0.85))
-
                     // Live Mood Status Pill
                     HStack(spacing: 3) {
                         Text(state.currentMood.emoji)

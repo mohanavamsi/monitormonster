@@ -258,3 +258,4 @@ public struct SystemStatsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+
