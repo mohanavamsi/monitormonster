@@ -5,7 +5,7 @@ APP_NAME="MonitorMonster"
 REPO="mohanavamsi/monitormonster"
 INSTALL_DIR="/Applications"
 
-echo "👾 Installing $APP_NAME on your Mac..."
+echo "👾 Installing $APP_NAME (by itvizag) on your Mac..."
 
 # Check if pre-built DMG is available from release
 RELEASE_URL="https://github.com/$REPO/releases/latest/download/MonitorMonster-1.0.0.dmg"

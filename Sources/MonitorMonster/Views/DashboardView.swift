@@ -67,6 +67,10 @@ public struct DashboardView: View {
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(.secondary)
 
+                    Text("by itvizag")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.secondary.opacity(0.85))
+
                     // Live Mood Status Pill
                     HStack(spacing: 3) {
                         Text(state.currentMood.emoji)
@@ -263,9 +267,36 @@ public struct DashboardView: View {
     // MARK: - Footer Bar
     private var footerBar: some View {
         HStack {
-            Text("Auto-refresh active")
-                .font(.system(size: 10))
-                .foregroundColor(.secondary)
+            HStack(spacing: 4) {
+                Text("Crafted with")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                Text("❤️")
+                    .font(.system(size: 9))
+                Text("by")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                Button(action: {
+                    if let url = URL(string: "https://itvizag.com") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }) {
+                    Text("itvizag")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+                .help("Visit itvizag.com")
+
+                Text("•")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary.opacity(0.6))
+
+                Text("Auto-refresh")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
+
             Spacer()
 
             Button("Quit MonitorMonster") {

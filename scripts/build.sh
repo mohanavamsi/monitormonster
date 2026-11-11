@@ -49,6 +49,10 @@ cat << 'EOF' > "$APP_DIR/Contents/Info.plist"
     <string>14.0</string>
     <key>LSUIElement</key>
     <true/>
+    <key>CFBundleGetInfoString</key>
+    <string>MonitorMonster by itvizag</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2026 itvizag. All rights reserved.</string>
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSLocationWhenInUseUsageDescription</key>

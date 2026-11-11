@@ -1,6 +1,7 @@
 # 👾 MonitorMonster
 
-> **Ultra-lightweight native macOS app for real-time Wi-Fi diagnostics, dual-hop latency, and MacBook battery telemetry.**
+> **Ultra-lightweight native macOS app for real-time Wi-Fi diagnostics, dual-hop latency, and MacBook battery telemetry.**  
+> *Crafted with ❤️ by **[itvizag](https://itvizag.com)**.*
 
 Built specifically for MacBooks (Apple Silicon M1/M2/M3/M4 & Intel) using native **Swift & SwiftUI**.
 
@@ -66,3 +67,10 @@ git clone https://github.com/mohanavamsi/monitormonster.git
 cd monitormonster
 ./scripts/run.sh
 ```
+
+---
+
+## 🏢 About & Branding
+MonitorMonster is proudly designed, crafted, and maintained by **[itvizag](https://itvizag.com)**.  
+For feedback, collaborations, or enterprise tooling inquiries, visit [itvizag.com](https://itvizag.com).
+
