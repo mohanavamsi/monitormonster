@@ -1,16 +1,24 @@
 import AppKit
 import SwiftUI
 import Combine
+import CoreLocation
 
 @MainActor
-public final class AppDelegate: NSObject, NSApplicationDelegate {
+public final class AppDelegate: NSObject, NSApplicationDelegate, CLLocationManagerDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     private var cancellables = Set<AnyCancellable>()
+    private var locationManager: CLLocationManager?
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         // Pure Menu Bar Accessory app (no window in the middle of desktop)
         NSApp.setActivationPolicy(.accessory)
+
+        // Request Location permission so macOS unredacts the Wi-Fi SSID
+        let lm = CLLocationManager()
+        lm.delegate = self
+        lm.requestWhenInUseAuthorization()
+        self.locationManager = lm
 
         // Setup Status Item in Menu Bar with Glowing Monster Ball icon
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)

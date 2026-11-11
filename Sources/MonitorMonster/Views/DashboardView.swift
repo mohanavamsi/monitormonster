@@ -89,6 +89,20 @@ public struct DashboardView: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.secondary)
                         .lineLimit(1)
+
+                    if state.isConnected && state.wifiDetails.isRedactedByMacOS {
+                        Button(action: {
+                            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }) {
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Apple masks exact Wi-Fi names when Location Services is turned off. Click to view Privacy & Security settings.")
+                    }
                 }
             }
 

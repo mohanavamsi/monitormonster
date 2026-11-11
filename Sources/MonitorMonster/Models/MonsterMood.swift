@@ -58,3 +58,4 @@ public enum MonsterMood: String, CaseIterable, Sendable {
         }
     }
 }
+

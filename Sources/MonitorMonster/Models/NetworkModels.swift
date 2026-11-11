@@ -42,6 +42,7 @@ public struct WiFiDetails: Identifiable, Sendable {
     public var channelWidth: String
     public var phyMode: String
     public var security: String
+    public var isRedactedByMacOS: Bool
     public var quality: WiFiQuality {
         WiFiQuality.from(rssi: rssi)
     }
@@ -58,7 +59,8 @@ public struct WiFiDetails: Identifiable, Sendable {
         band: String = "Unknown",
         channelWidth: String = "Unknown",
         phyMode: String = "Unknown",
-        security: String = "Unknown"
+        security: String = "Unknown",
+        isRedactedByMacOS: Bool = false
     ) {
         self.ssid = ssid
         self.bssid = bssid
@@ -72,6 +74,7 @@ public struct WiFiDetails: Identifiable, Sendable {
         self.channelWidth = channelWidth
         self.phyMode = phyMode
         self.security = security
+        self.isRedactedByMacOS = isRedactedByMacOS
     }
 }
 

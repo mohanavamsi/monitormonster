@@ -48,17 +48,33 @@ public final class WiFiService {
 
         let phyModeStr = iface != nil ? formatPHYMode(iface!.activePHYMode()) : "Wi-Fi (802.11)"
 
-        // Prefer SSID from ipconfig (bypasses location privacy restriction on macOS 14+), fallback to CoreWLAN, then system_profiler
-        var ssid = ipConfig.ssid.isEmpty ? (iface?.ssid() ?? "") : ipConfig.ssid
-        if ssid.isEmpty || ssid == "Wi-Fi Network" {
+        // 1. Try CoreWLAN first (gives unredacted SSID when location authorized)
+        var ssid = iface?.ssid() ?? ""
+
+        // 2. Fallback to ipconfig if CoreWLAN is empty or redacted
+        if ssid.isEmpty || ssid.contains("redacted") {
+            ssid = ipConfig.ssid
+        }
+
+        // 3. Fallback to system_profiler if still empty or redacted
+        if ssid.isEmpty || ssid == "Wi-Fi Network" || ssid.contains("redacted") {
             let fallbackSSID = fetchSSIDFallback()
-            if !fallbackSSID.isEmpty {
+            if !fallbackSSID.isEmpty && !fallbackSSID.contains("redacted") {
                 ssid = fallbackSSID
-            } else {
-                ssid = "Home Wi-Fi"
             }
         }
-        let bssid = ipConfig.bssid.isEmpty ? (iface?.bssid() ?? "N/A") : ipConfig.bssid
+
+        // 4. If macOS still strictly masks the string because Location Services is OFF
+        var isRedacted = false
+        if ssid.isEmpty || ssid.contains("redacted") || ssid == "Wi-Fi Network" {
+            ssid = "Connected Wi-Fi (\(bandStr))"
+            isRedacted = true
+        }
+
+        var bssid = iface?.bssid() ?? ipConfig.bssid
+        if bssid.isEmpty || bssid.contains("redacted") {
+            bssid = "Protected by macOS"
+        }
         let security = ipConfig.security.isEmpty ? "WPA2/WPA3" : ipConfig.security
 
         let wifiDetails = WiFiDetails(
@@ -73,7 +89,8 @@ public final class WiFiService {
             band: bandStr,
             channelWidth: widthStr,
             phyMode: phyModeStr,
-            security: security
+            security: security,
+            isRedactedByMacOS: isRedacted
         )
 
         let ipDetails = IPDetails(
