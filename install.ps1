@@ -25,11 +25,27 @@ $Downloaded = $false
 # 1. Attempt to download pre-built standalone binary
 try {
     Write-Host "==> Downloading latest release binary from GitHub..." -ForegroundColor Yellow
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -Uri $ReleaseUrl -OutFile $TargetExe -UseBasicParsing
-    $Downloaded = $true
+    
+    # Prefer curl.exe (built into Windows 10/11) as it handles 302 redirects cleanly
+    if (Get-Command "curl.exe" -ErrorAction SilentlyContinue) {
+        & curl.exe -sLf "$ReleaseUrl" -o "$TargetExe"
+        if ((Test-Path $TargetExe) -and ((Get-Item $TargetExe).Length -gt 500000)) {
+            $Downloaded = $true
+        }
+    }
+
+    # Fallback to .NET WebClient / Invoke-WebRequest
+    if (-not $Downloaded) {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+        $WebClient = New-Object System.Net.WebClient
+        $WebClient.Headers.Add("User-Agent", "MonitorMonster-Installer")
+        $WebClient.DownloadFile($ReleaseUrl, $TargetExe)
+        if ((Test-Path $TargetExe) -and ((Get-Item $TargetExe).Length -gt 500000)) {
+            $Downloaded = $true
+        }
+    }
 } catch {
-    Write-Host "==> Pre-built binary not yet found on latest release, falling back to build from source..." -ForegroundColor Yellow
+    Write-Host "==> Pre-built binary download failed: $($_.Exception.Message)" -ForegroundColor DarkGray
 }
 
 # 2. Build from source fallback if dotnet is available
@@ -89,3 +105,4 @@ Write-Host "====================================================================
 Write-Host "🎉 $AppName installed successfully to $InstallDir!" -ForegroundColor Green
 Write-Host "   Look for the glowing monster ball in your System Tray (Taskbar Notification Area)!" -ForegroundColor Cyan
 Write-Host "==========================================================================" -ForegroundColor Green
+

@@ -4,11 +4,11 @@
 $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ProjectDir = Resolve-Path "$ScriptDir/../MonitorMonster"
-$OutputDir = Resolve-Path "$ScriptDir/../../dist/windows" -ErrorAction SilentlyContinue
+$ProjectDir = (Resolve-Path "$ScriptDir/../MonitorMonster").Path
+$OutputDir = [System.IO.Path]::GetFullPath("$ScriptDir/../../dist/windows")
 
-if (-not $OutputDir) {
-    $OutputDir = New-Item -ItemType Directory -Path "$ScriptDir/../../dist/windows" -Force
+if (-not (Test-Path $OutputDir)) {
+    New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 }
 
 Write-Host "==> Building MonitorMonster for Windows (x64 Self-Contained)..." -ForegroundColor Cyan
@@ -30,3 +30,4 @@ if (Test-Path $ExePath) {
 } else {
     Write-Error "Build failed: MonitorMonster.exe not found in $OutputDir"
 }
+
